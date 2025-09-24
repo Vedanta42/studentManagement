@@ -56,26 +56,65 @@ const getStudentById = (req, res) => {
 const updateStudent = (req, res) => {
   const { id } = req.params;
   const { name, email, age } = req.body;
-  if (!name || !email || !age) {
-    return res.status(400).send('Name, email, and age are required');
-  }
 
-  const updateQuery = `UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?`;
-
-  db.execute(updateQuery, [name, email, age, id], (err, result) => {
+  // Fetch current student data
+  db.execute(`SELECT * FROM students WHERE id = ?`, [id], (err, rows) => {
     if (err) {
       console.log(err.message);
       res.status(500).send(err.message);
       return;
     }
-    if (result.affectedRows === 0) {
+    if (rows.length === 0) {
       res.status(404).send('Student not found');
       return;
     }
-    console.log(`Updated student with ID: ${id}`);
-    res.status(200).send('Student has been updated');
+
+    const currentStudent = rows[0];
+    // Use provided values or keep existing ones
+    const updatedName = name || currentStudent.name;
+    const updatedEmail = email || currentStudent.email;
+    const updatedAge = age !== undefined ? age : currentStudent.age;
+
+    const updateQuery = `UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?`;
+
+    db.execute(updateQuery, [updatedName, updatedEmail, updatedAge, id], (err, result) => {
+      if (err) {
+        console.log(err.message);
+        res.status(500).send(err.message);
+        return;
+      }
+      if (result.affectedRows === 0) {
+        res.status(404).send('Student not found');
+        return;
+      }
+      console.log(`Updated student with ID: ${id}`);
+      res.status(200).send('Student has been updated');
+    });
   });
 };
+// const updateStudent = (req, res) => {
+//   const { id } = req.params;
+//   const { name, email, age } = req.body;
+//   if (!name || !email || !age) {
+//     return res.status(400).send('Name, email, and age are required');
+//   }
+
+//   const updateQuery = `UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?`;
+
+//   db.execute(updateQuery, [name, email, age, id], (err, result) => {
+//     if (err) {
+//       console.log(err.message);
+//       res.status(500).send(err.message);
+//       return;
+//     }
+//     if (result.affectedRows === 0) {
+//       res.status(404).send('Student not found');
+//       return;
+//     }
+//     console.log(`Updated student with ID: ${id}`);
+//     res.status(200).send('Student has been updated');
+//   });
+// };
 
 // Delete a student
 const deleteStudent = (req, res) => {
